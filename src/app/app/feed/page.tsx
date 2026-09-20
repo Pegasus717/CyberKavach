@@ -9,6 +9,7 @@ import { clearUnread } from "@/components/unread-store";
 import { levelClass, levelLabel } from "@/lib/client";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { TrendingScamsPanel } from "@/components/trending-scams-panel";
 
 export default function FeedPage() {
   const { scans, userId, profiles } = useFamily();
@@ -31,8 +32,9 @@ export default function FeedPage() {
   }, [scans, filter, userId]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <h1 className="text-3xl font-semibold">{t("feed")}</h1>
+      <TrendingScamsPanel />
       <Tabs value={filter} onValueChange={setFilter}>
         <TabsList>
           <TabsTrigger value="mine">{t("mine")}</TabsTrigger>

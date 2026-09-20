@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { TrendingScamsPanel } from "@/components/trending-scams-panel";
 import type { Connection, Scan } from "@/lib/types";
 
 export function CheckForm() {
@@ -256,6 +257,9 @@ export function CheckForm() {
               )}
             </CardContent>
           </Card>
+
+          {/* Trending Scams Network Rail Card */}
+          <TrendingScamsPanel />
 
           {/* Family Status Rail Card */}
           <Card className="rounded-[20px] border border-border shadow-sm bg-card">

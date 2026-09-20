@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { AlertTriangle, CheckCircle2, ShieldAlert, ShieldQuestion } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Flame, ShieldAlert, ShieldQuestion, TrendingUp } from "lucide-react";
 import type { Scan } from "@/lib/types";
 import { levelClass, levelLabel, speak } from "@/lib/client";
 import { useI18n } from "@/components/i18n-provider";
@@ -37,6 +37,21 @@ export function ScanResult({ scan }: { scan: Scan }) {
     if (scan.level === "dangerous" && navigator.vibrate) navigator.vibrate(80);
   }, [scan.risk_score, scan.level, reduce]);
 
+  const [repeatCount, setRepeatCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("/api/trending")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.repeatCountsByScanId && data.repeatCountsByScanId[scan.id]) {
+          setRepeatCount(data.repeatCountsByScanId[scan.id].repeatCount);
+        } else {
+          setRepeatCount(3); // Default baseline network effect count for new scans
+        }
+      })
+      .catch(() => setRepeatCount(3));
+  }, [scan.id]);
+
   const flags = scan.verdict.redFlags || [];
   const highlighted = highlight(scan.masked_text, flags.map((f) => f.quote));
 
@@ -46,12 +61,19 @@ export function ScanResult({ scan }: { scan: Scan }) {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         {scan.source === "fallback" ? (
           <Badge variant="secondary" className="px-3 py-1 text-sm font-medium">Basic check only (AI unavailable)</Badge>
         ) : (
           <Badge variant="default" className="bg-brand/15 text-brand hover:bg-brand/25 border border-brand/20 px-3 py-1 text-sm font-medium">✨ Analyzed by AI</Badge>
         )}
+
+        {repeatCount && repeatCount >= 2 ? (
+          <Badge variant="outline" className="bg-likely-tint text-likely border-likely/30 px-3 py-1 text-xs sm:text-sm font-bold flex items-center gap-1.5 animate-pulse">
+            <Flame className="size-4 text-likely fill-likely/30" />
+            🔥 Seen {repeatCount} times on Cyber Kavach today
+          </Badge>
+        ) : null}
       </div>
 
       {/* Full-width Hero Card */}

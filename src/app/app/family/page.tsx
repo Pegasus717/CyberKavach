@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { Connection } from "@/lib/types";
+import { PushNotificationBanner } from "@/components/push-notification-banner";
 
 export default function FamilyPage() {
   const { me, userId, connections, profiles, scans, reload } = useFamily();
@@ -68,6 +69,9 @@ export default function FamilyPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-semibold">{t("family")}</h1>
+      
+      <PushNotificationBanner />
+
       <Card className="rounded-3xl">
         <CardHeader>
           <CardTitle>{t("shareCode")}</CardTitle>

@@ -3,6 +3,7 @@ import { analyzeMaskedText } from "@/lib/analyze";
 import { fromZod, jsonError, readJson } from "@/lib/api";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { sendFamilyAlerts } from "@/lib/family-notifications";
 
 const schema = z.object({
   text: z.string().trim().min(1, "Paste a message to check.").max(2000, "Keep the message under 2000 characters."),
@@ -38,6 +39,9 @@ export async function POST(request: Request) {
     .select("*")
     .single();
   if (error) return jsonError(error.message, 500);
+
+  // Trigger background email and web push alerts to connected family members if dangerous
+  void sendFamilyAlerts(data as any, auth.user.id);
 
   return Response.json({
     scan: data,

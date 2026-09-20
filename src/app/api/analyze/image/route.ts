@@ -5,6 +5,7 @@ import { requireAdmin, requireUser } from "@/lib/auth";
 import { generateJsonFromParts, isGeminiConfigured } from "@/lib/gemini";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { maskText } from "@/lib/mask";
+import { sendFamilyAlerts } from "@/lib/family-notifications";
 
 const schema = z.object({
   imageBase64: z.string().min(20).max(4_000_000),
@@ -68,5 +69,9 @@ export async function POST(request: Request) {
     .select("*")
     .single();
   if (error) return jsonError(error.message, 500);
+  
+  // Trigger background family alerts for image scan
+  void sendFamilyAlerts(data as any, auth.user.id);
+
   return Response.json({ scan: data, hits: result.hits, extractedText: maskText(text).masked });
 }

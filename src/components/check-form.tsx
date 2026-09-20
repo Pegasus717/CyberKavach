@@ -18,6 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { TrendingScamsPanel } from "@/components/trending-scams-panel";
+import { VoiceNoteChecker } from "@/components/voice-note-checker";
 import type { Connection, Scan } from "@/lib/types";
 
 export function CheckForm() {
@@ -210,6 +211,8 @@ export function CheckForm() {
               </Button>
             </CardContent>
           </Card>
+          {/* Voice Note & Call Recording Checker Card */}
+          <VoiceNoteChecker />
         </div>
 
         {/* Right Column (4 cols): Recent Scans + Family Status */}

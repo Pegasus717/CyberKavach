@@ -12,6 +12,7 @@ import {
   Check, 
   FileText, 
   LogOut, 
+  Mic,
   Plus, 
   Settings, 
   Shield, 
@@ -31,6 +32,7 @@ import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/app", key: "check" as const, label: "Check", icon: Shield },
+  { href: "/app/elder", key: "elder" as const, label: "Elder Mode", icon: Mic },
   { href: "/app/feed", key: "feed" as const, label: "Threat Feed", icon: Bell },
   { href: "/app/family", key: "family" as const, label: "Family", icon: Users },
   { href: "/app/complaints", key: "help" as const, label: "Complaints", icon: FileText },
@@ -38,6 +40,7 @@ const navItems = [
 
 function getPageTitle(pathname: string): string {
   if (pathname === "/app") return "Check Message";
+  if (pathname === "/app/elder") return "Elder Voice Mode (वरिष्ठ नागरिक मोड)";
   if (pathname === "/app/feed") return "Threat Feed";
   if (pathname === "/app/family") return "Family Safety";
   if (pathname === "/app/complaints") return "Complaints";
@@ -260,6 +263,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           {/* Right: Language, Theme Toggle, Notifications */}
           <div className="flex items-center gap-3">
+            {/* Elder Mode Shortcut */}
+            <Link href="/app/elder">
+              <Button variant="outline" size="sm" className="h-9 rounded-xl border-brand/40 bg-brand/10 text-brand font-semibold hover:bg-brand/20 flex items-center gap-1.5">
+                <Mic className="size-4" />
+                <span className="hidden sm:inline">Elder Mode</span>
+              </Button>
+            </Link>
+
             {/* Language Switcher */}
             <div className="flex items-center rounded-xl border border-border bg-surface-2 p-0.5 text-xs font-medium">
               <button

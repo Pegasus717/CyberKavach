@@ -9,13 +9,15 @@ import { api } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/components/i18n-provider";
 import { useFamily } from "@/components/family-realtime";
+import Link from "next/link";
+import { Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import type { Scan } from "@/lib/types";
+import type { Connection, Scan } from "@/lib/types";
 
 export function CheckForm() {
   const params = useSearchParams();
@@ -107,6 +109,22 @@ export function CheckForm() {
               />
             ) : null}
             <CardContent className="space-y-4 p-6">
+              {/* Elder Voice Mode Quick Banner */}
+              <div className="flex items-center justify-between p-3 rounded-xl bg-brand/10 border border-brand/20">
+                <div className="flex items-center gap-2.5">
+                  <span className="grid size-8 place-items-center rounded-lg bg-brand text-white font-bold text-xs">
+                    <Mic className="size-4" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold text-foreground">Elder Voice Mode (वरिष्ठ नागरिक मोड)</p>
+                    <p className="text-[11px] text-muted-foreground">Prefer speaking instead of typing? Use Hindi voice check.</p>
+                  </div>
+                </div>
+                <Button asChild size="sm" className="rounded-lg bg-brand text-white text-xs font-semibold hover:bg-brand-hover">
+                  <Link href="/app/elder">Open Voice Check</Link>
+                </Button>
+              </div>
+
               <div className="space-y-1.5">
                 <Label htmlFor="msg" className="text-base font-semibold">{t("paste")}</Label>
                 <Textarea
@@ -205,7 +223,7 @@ export function CheckForm() {
                 <p className="text-xs text-muted-foreground">No recent scans yet. Paste a message to start.</p>
               ) : (
                 <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
-                  {scans.slice(0, 5).map((scan) => (
+                  {scans.slice(0, 5).map((scan: Scan) => (
                     <button
                       key={scan.id}
                       onClick={() => router.push(`/app/scan/${scan.id}`)}
@@ -265,7 +283,7 @@ export function CheckForm() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {connections.slice(0, 4).map((con) => {
+                  {connections.slice(0, 4).map((con: Connection) => {
                     const otherId = con.requester_id === me?.id ? con.addressee_id : con.requester_id;
                     const other = profiles[otherId];
                     return (

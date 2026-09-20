@@ -18,6 +18,9 @@ export default function FeedPage() {
 
   useEffect(() => {
     clearUnread();
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("kavach-last-seen-feed", new Date().toISOString());
+    }
     if (typeof Notification !== "undefined" && Notification.permission === "default") {
       void Notification.requestPermission();
     }

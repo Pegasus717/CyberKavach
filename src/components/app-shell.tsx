@@ -171,17 +171,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Icon className={cn("size-5 shrink-0", active ? "text-calm" : "")} />
                 {!collapsed && <span className="truncate">{t(item.key)}</span>}
 
-                {/* Badge */}
+                {/* Badge / Animated Red Dot */}
                 {badgeCount > 0 && (
                   <span
                     className={cn(
-                      "grid place-items-center rounded-full bg-danger text-white text-xs font-bold animate-bounce",
-                      collapsed
-                        ? "absolute top-1 right-1 size-4 text-[10px]"
-                        : "ml-auto min-w-5 h-5 px-1.5"
+                      "flex items-center justify-center gap-1",
+                      collapsed ? "absolute top-1 right-1" : "ml-auto"
                     )}
                   >
-                    {badgeCount}
+                    <span className="relative flex size-3 items-center justify-center">
+                      <span className="absolute inline-flex size-full animate-ping rounded-full bg-danger opacity-75" />
+                      <span className="relative inline-flex size-2.5 rounded-full bg-danger" />
+                    </span>
+                    {!collapsed && (
+                      <span className="rounded-full bg-danger px-1.5 py-0.5 text-[10px] font-extrabold text-white">
+                        {badgeCount}
+                      </span>
+                    )}
                   </span>
                 )}
               </Link>
@@ -306,14 +312,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <span className="sr-only">Toggle theme</span>
             </Button>
 
-            {/* Notifications Button */}
-            <Link href="/app/feed" className="relative">
-              <Button variant="outline" size="icon" className="size-9 rounded-xl border-border bg-surface-2">
-                <Bell className="size-4" />
+            {/* Notifications Button with Animated Red Dot */}
+            <Link href="/app/feed" className="relative group" title={unread > 0 ? `${unread} new family threat alert(s)` : "Threat Alerts"}>
+              <Button
+                variant="outline"
+                size="icon"
+                className={cn(
+                  "size-9 rounded-xl border-border bg-surface-2 transition-all",
+                  unread > 0 && "border-danger/60 bg-danger/10 text-danger shadow-sm ring-2 ring-danger/30"
+                )}
+              >
+                <Bell className={cn("size-4", unread > 0 && "animate-bounce text-danger")} />
               </Button>
               {unread > 0 && (
-                <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-danger text-[10px] font-bold text-white">
-                  {unread}
+                <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center pointer-events-none">
+                  {/* Radar pulse animation */}
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-danger opacity-75" />
+                  {/* Glowing red badge with unread count */}
+                  <span className="relative inline-flex size-4 items-center justify-center rounded-full bg-danger text-[10px] font-black text-white shadow-md">
+                    {unread}
+                  </span>
                 </span>
               )}
             </Link>

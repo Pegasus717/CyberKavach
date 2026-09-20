@@ -14,6 +14,11 @@ export function bumpUnread() {
   emit();
 }
 
+export function setUnreadCount(n: number) {
+  count = n;
+  emit();
+}
+
 export function clearUnread() {
   count = 0;
   emit();

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import type { Connection, Profile, Scan } from "@/lib/types";
 import { AlertBanner } from "@/components/alert-banner";
-import { bumpUnread } from "@/components/unread-store";
+import { bumpUnread, setUnreadCount } from "@/components/unread-store";
 import { JOIN_CODE_KEY } from "@/lib/share-code";
 import { useI18n } from "@/components/i18n-provider";
 import { api, levelLabel, playPing } from "@/lib/client";
@@ -70,6 +70,19 @@ export function FamilyRealtimeProvider({ children }: { children: React.ReactNode
     setProfiles(map);
     const { data: scanRows } = await supabase.from("scans").select("*").order("created_at", { ascending: false }).limit(80);
     setScans((scanRows || []) as Scan[]);
+
+    const lastSeenStr = typeof localStorage !== "undefined" ? localStorage.getItem("kavach-last-seen-feed") : null;
+    const lastSeenTime = lastSeenStr ? new Date(lastSeenStr).getTime() : 0;
+    const unseenScans = (scanRows || []).filter((s: Scan) => {
+      return (
+        s.user_id !== uid &&
+        (s.level === "dangerous" || s.level === "likely_scam") &&
+        new Date(s.created_at).getTime() > lastSeenTime
+      );
+    });
+    if (unseenScans.length > 0) {
+      setUnreadCount(unseenScans.length);
+    }
 
     const pendingCode = localStorage.getItem(JOIN_CODE_KEY);
     if (pendingCode) {

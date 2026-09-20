@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { Mic, MicOff, Volume2, ShieldCheck, AlertTriangle, ShieldAlert, ArrowLeft, RefreshCw } from "lucide-react";
+import { Mic, Volume2, ShieldCheck, AlertTriangle, ShieldAlert, ArrowLeft, RefreshCw, Languages } from "lucide-react";
 import { toast } from "sonner";
 import { api, speak } from "@/lib/client";
 import { useFamily } from "@/components/family-realtime";
@@ -23,6 +23,7 @@ export default function ElderModePage() {
   const { me } = useFamily();
   const { setLang } = useI18n();
 
+  const [voiceLang, setVoiceLang] = useState<"hi" | "en">("hi");
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [busy, setBusy] = useState(false);
@@ -30,15 +31,12 @@ export default function ElderModePage() {
 
   const recognitionRef = useRef<any>(null);
 
-  useEffect(() => {
-    // Force Hindi language mode for Elder Mode
-    setLang("hi");
-
+  const initSpeechRecognition = useCallback((lang: "hi" | "en") => {
     if (typeof window !== "undefined") {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
-        recognition.lang = "hi-IN";
+        recognition.lang = lang === "hi" ? "hi-IN" : "en-IN";
         recognition.continuous = false;
         recognition.interimResults = true;
 
@@ -58,18 +56,31 @@ export default function ElderModePage() {
           console.error("Speech recognition error", event.error);
           setIsListening(false);
           if (event.error !== "no-speech") {
-            toast.error("आवाज़ नहीं पहचान सके, कृपया फिर से बोलें (Could not recognize speech)");
+            toast.error(
+              lang === "hi"
+                ? "आवाज़ नहीं पहचान सके, कृपया फिर से बोलें (Could not recognize speech)"
+                : "Could not recognize speech, please try speaking again."
+            );
           }
         };
 
         recognitionRef.current = recognition;
       }
     }
-  }, [setLang]);
+  }, []);
+
+  useEffect(() => {
+    setLang(voiceLang);
+    initSpeechRecognition(voiceLang);
+  }, [voiceLang, setLang, initSpeechRecognition]);
 
   const toggleListening = () => {
     if (!recognitionRef.current) {
-      toast.error("आपके ब्राउज़र में आवाज़ पहचान सुविधा उपलब्ध नहीं है (Speech recognition not supported in this browser)");
+      toast.error(
+        voiceLang === "hi"
+          ? "आपके ब्राउज़र में आवाज़ पहचान सुविधा उपलब्ध नहीं है (Speech recognition not supported)"
+          : "Speech recognition is not supported in this browser."
+      );
       return;
     }
 
@@ -96,26 +107,41 @@ export default function ElderModePage() {
         method: "POST",
         body: JSON.stringify({
           text: transcript,
-          language: "hi",
+          language: voiceLang,
           country: me?.country || "IN",
         }),
       });
 
       setResultScan(res.scan);
 
-      // Auto read aloud in Hindi immediately!
-      const levelHindi =
-        res.scan.level === "safe"
-          ? "यह संदेश सुरक्षित है।"
-          : res.scan.level === "careful"
-          ? "ध्यान दें! इस संदेश में सावधानी बरतें।"
-          : "सावधान! यह एक ख़तरनाक ठगी का संदेश है।";
+      // Auto read aloud in selected language!
+      let spokenSummary = "";
+      if (voiceLang === "hi") {
+        const levelText =
+          res.scan.level === "safe"
+            ? "यह संदेश सुरक्षित है।"
+            : res.scan.level === "careful"
+            ? "ध्यान दें! इस संदेश में सावधानी बरतें।"
+            : "सावधान! यह एक ख़तरनाक ठगी का संदेश है।";
+        spokenSummary = `${levelText} ${res.scan.verdict.summary}। ${res.scan.verdict.whatToDoNow.join("। ")}`;
+      } else {
+        const levelText =
+          res.scan.level === "safe"
+            ? "This message is safe."
+            : res.scan.level === "careful"
+            ? "Be careful with this message."
+            : "Warning! This is a dangerous scam message.";
+        spokenSummary = `${levelText} ${res.scan.verdict.summary}. ${res.scan.verdict.whatToDoNow.join(". ")}`;
+      }
 
-      const spokenSummary = `${levelHindi} ${res.scan.verdict.summary}। ${res.scan.verdict.whatToDoNow.join("। ")}`;
-      speak(spokenSummary, "hi");
+      speak(spokenSummary, voiceLang);
 
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "जाँच नहीं हो सकी (Analysis failed)");
+      toast.error(
+        voiceLang === "hi"
+          ? e instanceof Error ? e.message : "जाँच नहीं हो सकी (Analysis failed)"
+          : e instanceof Error ? e.message : "Analysis failed"
+      );
     } finally {
       setBusy(false);
     }
@@ -133,7 +159,7 @@ export default function ElderModePage() {
   return (
     <div className="min-h-[85vh] flex flex-col justify-between py-4 px-2 space-y-6">
       {/* Top Bar for Elder Mode */}
-      <div className="flex items-center justify-between border-b border-border/50 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 pb-4">
         <Button
           variant="outline"
           size="sm"
@@ -141,11 +167,32 @@ export default function ElderModePage() {
           onClick={() => router.push("/app")}
         >
           <ArrowLeft className="size-4" />
-          <span>सामान्य मोड (Normal Mode)</span>
+          <span>Normal Mode</span>
         </Button>
 
+        {/* Voice Language Selector Pill */}
+        <div className="flex items-center gap-2 rounded-xl bg-surface-2 border border-border p-1">
+          <Languages className="size-4 text-muted-foreground ml-2" />
+          <button
+            onClick={() => setVoiceLang("hi")}
+            className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
+              voiceLang === "hi" ? "bg-brand text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            🇮🇳 हिन्दी (Hindi)
+          </button>
+          <button
+            onClick={() => setVoiceLang("en")}
+            className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
+              voiceLang === "en" ? "bg-brand text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            🇬🇧 English
+          </button>
+        </div>
+
         <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/15 text-brand text-xs font-bold uppercase tracking-wide border border-brand/20">
-          👴 वरिष्ठ नागरिक मोड (Elder Voice Mode)
+          👴 Elder Voice Mode
         </span>
       </div>
 
@@ -154,10 +201,12 @@ export default function ElderModePage() {
         <div className="flex-1 flex flex-col items-center justify-center text-center space-y-8 py-8">
           <div className="space-y-3 max-w-lg">
             <h1 className="text-3xl sm:text-4xl font-black text-foreground tracking-tight leading-tight">
-              संदेश बोलकर जाँचें
+              {voiceLang === "hi" ? "संदेश बोलकर जाँचें" : "Speak to Check Message"}
             </h1>
             <p className="text-lg text-muted-foreground font-medium">
-              नीचे लाल बटन दबाएँ और अपना मैसेज बोलें। AI तुरंत बोलकर जवाब देगा।
+              {voiceLang === "hi"
+                ? "नीचे बटन दबाएँ और अपना मैसेज बोलें (हिंदी या अंग्रेज़ी)। AI तुरंत बोलकर जवाब देगा।"
+                : "Press the button below and speak your suspicious message. AI will analyze and read the verdict aloud."}
             </p>
           </div>
 
@@ -180,9 +229,11 @@ export default function ElderModePage() {
               />
             )}
             <div className="flex flex-col items-center gap-2 relative z-10">
-              {isListening ? <Mic className="size-16 sm:size-20 animate-pulse" /> : <Mic className="size-16 sm:size-20" />}
+              <Mic className={`size-16 sm:size-20 ${isListening ? "animate-pulse" : ""}`} />
               <span className="text-base sm:text-lg font-bold">
-                {isListening ? "सुन रहे हैं... (Listening)" : "दबाएँ और बोलें"}
+                {isListening
+                  ? voiceLang === "hi" ? "सुन रहे हैं... (Listening)" : "Listening..."
+                  : voiceLang === "hi" ? "दबाएँ और बोलें" : "Press & Speak"}
               </span>
             </div>
           </motion.button>
@@ -190,7 +241,9 @@ export default function ElderModePage() {
           {/* Live Spoken Transcript Box */}
           {transcript && (
             <div className="w-full max-w-xl rounded-2xl border-2 border-brand/40 bg-card p-6 shadow-lg text-left space-y-4">
-              <p className="text-xs font-bold uppercase tracking-wider text-brand">आप बोल रहे हैं (Live Speech):</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-brand">
+                {voiceLang === "hi" ? "आप बोल रहे हैं (Live Speech):" : "Live Speech Transcript:"}
+              </p>
               <p className="text-xl sm:text-2xl font-bold text-foreground leading-relaxed">
                 "{transcript}"
               </p>
@@ -199,7 +252,9 @@ export default function ElderModePage() {
                 disabled={busy || !transcript.trim()}
                 onClick={analyzeSpokenText}
               >
-                {busy ? "जाँच हो रही है (Analyzing...)" : "🔍 अभी जाँच करें (Check Now)"}
+                {busy
+                  ? voiceLang === "hi" ? "जाँच हो रही है..." : "Analyzing..."
+                  : voiceLang === "hi" ? "🔍 अभी जाँच करें (Check Now)" : "🔍 Check Message Now"}
               </Button>
             </div>
           )}
@@ -225,23 +280,23 @@ export default function ElderModePage() {
                 <span className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-1.5 text-base font-bold uppercase tracking-wide">
                   {resultScan.level === "safe" ? (
                     <>
-                      <ShieldCheck className="size-6" /> सुरक्षित संदेश (Safe)
+                      <ShieldCheck className="size-6" /> {voiceLang === "hi" ? "सुरक्षित संदेश (Safe)" : "Safe Message"}
                     </>
                   ) : resultScan.level === "careful" ? (
                     <>
-                      <AlertTriangle className="size-6" /> सावधान रहें (Be Careful)
+                      <AlertTriangle className="size-6" /> {voiceLang === "hi" ? "सावधान रहें (Be Careful)" : "Be Careful"}
                     </>
                   ) : (
                     <>
-                      <ShieldAlert className="size-6" /> ख़तरनाक ठगी! (SCAM!)
+                      <ShieldAlert className="size-6" /> {voiceLang === "hi" ? "ख़तरनाक ठगी! (SCAM!)" : "DANGEROUS SCAM!"}
                     </>
                   )}
                 </span>
 
                 <button
-                  onClick={() => speak(resultScan.verdict.summary + ". " + resultScan.verdict.whatToDoNow.join(". "), "hi")}
+                  onClick={() => speak(resultScan.verdict.summary + ". " + resultScan.verdict.whatToDoNow.join(". "), voiceLang)}
                   className="rounded-full bg-white/20 p-3 hover:bg-white/30 transition-colors"
-                  title="फिर से सुनें (Read Aloud)"
+                  title="Read Aloud"
                 >
                   <Volume2 className="size-7" />
                 </button>
@@ -259,7 +314,9 @@ export default function ElderModePage() {
 
               {/* Action Steps */}
               <div className="rounded-2xl bg-black/20 p-5 space-y-3 backdrop-blur-sm border border-white/10">
-                <h3 className="text-lg font-bold">आगे क्या करें (What to do now):</h3>
+                <h3 className="text-lg font-bold">
+                  {voiceLang === "hi" ? "आगे क्या करें (What to do now):" : "What to do now:"}
+                </h3>
                 <ul className="space-y-2">
                   {resultScan.verdict.whatToDoNow.map((item, idx) => (
                     <li key={idx} className="flex items-start gap-3 text-lg font-semibold">
@@ -278,14 +335,14 @@ export default function ElderModePage() {
                 className="h-16 flex-1 rounded-2xl text-xl font-bold bg-white text-black hover:bg-white/90 shadow-xl"
               >
                 <RefreshCw className="size-6 mr-2" />
-                दूसरी जाँच करें (Check Another)
+                {voiceLang === "hi" ? "दूसरी जाँच करें (Check Another)" : "Check Another Message"}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => router.push(`/app/scan/${resultScan.id}`)}
                 className="h-16 rounded-2xl text-lg font-bold border-white/40 text-white hover:bg-white/20"
               >
-                पूरा विवरण (Full Report)
+                {voiceLang === "hi" ? "पूरा विवरण (Full Report)" : "Full Report"}
               </Button>
             </div>
           </motion.div>

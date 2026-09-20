@@ -35,6 +35,14 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const setLang = useCallback((next: Lang) => {
     setLangState(next);
     localStorage.setItem("kavach-lang", next);
+    // Asynchronously patch profile language if user is authenticated
+    void fetch("/api/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ language: next }),
+    }).catch(() => {
+      // Ignore background sync errors for unauthenticated users
+    });
   }, []);
 
   const value = useMemo<Ctx>(

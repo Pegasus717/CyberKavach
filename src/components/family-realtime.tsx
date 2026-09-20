@@ -50,7 +50,10 @@ export function FamilyRealtimeProvider({ children }: { children: React.ReactNode
     const { data: profile } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
     if (profile) {
       setMe(profile as Profile);
-      if (profile.language === "hi" || profile.language === "en") setLang(profile.language);
+      const stored = localStorage.getItem("kavach-lang") as "hi" | "en" | null;
+      if (!stored && (profile.language === "hi" || profile.language === "en")) {
+        setLang(profile.language);
+      }
     }
     const { data: cons } = await supabase.from("connections").select("*").order("created_at", { ascending: false });
     setConnections((cons || []) as Connection[]);

@@ -71,6 +71,12 @@ export const dict = {
     evalTitle: "Synthetic accuracy check",
     screenshotConsent: "I consent to send this screenshot to Gemini for text extraction. Cyber Kavach stores only masked text.",
     analyzeShot: "Check screenshot",
+    checkMessage: "Check Message",
+    threatFeed: "Threat Feed",
+    familySafety: "Family Safety",
+    scanAnalysis: "Scan Analysis",
+    complaintPlan: "Complaint Plan",
+    modelEval: "Model Evaluation",
   },
   hi: {
     appName: "Cyber Kavach",
@@ -142,6 +148,12 @@ export const dict = {
     evalTitle: "सिंथेटिक सटीकता जाँच",
     screenshotConsent: "मैं इस स्क्रीनशॉट को टेक्स्ट निकालने के लिए जेमिनी को भेजने की सहमति देता/देती हूँ। कवच केवल मास्क्ड पाठ रखता है।",
     analyzeShot: "स्क्रीनशॉट जाँचें",
+    checkMessage: "संदेश जाँचें",
+    threatFeed: "खतरा फ़ीड",
+    familySafety: "परिवार सुरक्षा",
+    scanAnalysis: "स्कैन विश्लेषण",
+    complaintPlan: "शिकायत योजना",
+    modelEval: "मॉडल मूल्यांकन",
   },
 } as const;
 

@@ -38,17 +38,17 @@ const navItems = [
   { href: "/app/complaints", key: "help" as const, label: "Complaints", icon: FileText },
 ];
 
-function getPageTitle(pathname: string): string {
-  if (pathname === "/app") return "Check Message";
+function getPageTitle(pathname: string, t: (key: any) => string): string {
+  if (pathname === "/app") return t("checkMessage");
   if (pathname === "/app/elder") return "Elder Voice Mode (वरिष्ठ नागरिक मोड)";
-  if (pathname === "/app/feed") return "Threat Feed";
-  if (pathname === "/app/family") return "Family Safety";
-  if (pathname === "/app/complaints") return "Complaints";
-  if (pathname === "/app/settings") return "Settings";
-  if (pathname.startsWith("/app/scan/")) return "Scan Analysis";
-  if (pathname.startsWith("/app/complaint/")) return "Complaint Plan";
-  if (pathname === "/app/eval") return "Model Evaluation";
-  return "Cyber Kavach";
+  if (pathname === "/app/feed") return t("threatFeed");
+  if (pathname === "/app/family") return t("familySafety");
+  if (pathname === "/app/complaints") return t("complaints");
+  if (pathname === "/app/settings") return t("settings");
+  if (pathname.startsWith("/app/scan/")) return t("scanAnalysis");
+  if (pathname.startsWith("/app/complaint/")) return t("complaintPlan");
+  if (pathname === "/app/eval") return t("modelEval");
+  return t("appName");
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -97,7 +97,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     router.push("/");
   };
 
-  const title = getPageTitle(pathname);
+  const title = getPageTitle(pathname, t);
 
   return (
     <div className="flex min-h-dvh w-full bg-background text-foreground">
@@ -362,7 +362,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       </span>
                     )}
                   </span>
-                  <span>{item.label}</span>
+                  <span>{t(item.key)}</span>
                 </Link>
               </li>
             );

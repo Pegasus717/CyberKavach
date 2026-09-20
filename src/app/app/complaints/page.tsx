@@ -29,7 +29,10 @@ export default function ComplaintsPage() {
         </Button>
       </div>
       {rows.length === 0 ? (
-        <p className="text-muted-foreground">{t("recoveryDisclaimer")}</p>
+        <div className="space-y-3 rounded-3xl border border-dashed p-8 text-center text-muted-foreground">
+          <p>No complaints yet. Start one after a dangerous scan.</p>
+          <p className="text-sm">{t("recoveryDisclaimer")}</p>
+        </div>
       ) : (
         rows.map((row) => (
           <Link key={row.id} href={`/app/complaint/${row.id}`}>

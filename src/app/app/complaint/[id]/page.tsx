@@ -48,6 +48,13 @@ export default function ComplaintDetailPage() {
 
   if (!row) return null;
 
+  const steps = row.plan?.steps ?? [];
+  const fieldsNeeded = row.plan?.fieldsNeeded ?? [];
+  const progress = row.progress ?? {};
+  const urgencyLabel = row.plan?.urgency
+    ? { critical: "🔴 CRITICAL", high: "🟠 HIGH URGENCY", normal: "🟢 Normal" }[row.plan.urgency] ?? row.plan.urgency.toUpperCase()
+    : "Loading…";
+
   async function toggle(stepId: string, done: boolean) {
     const res = await api<{ complaint: Complaint }>(`/api/complaints/${id}/progress`, {
       method: "PATCH",
@@ -69,81 +76,123 @@ export default function ComplaintDetailPage() {
   }
 
   return (
-    <div className="space-y-5">
-      <h1 className="text-3xl font-semibold">{row.plan.urgency.toUpperCase()}</h1>
-      <p>{row.plan.urgencyNote}</p>
-      <p className="text-sm text-muted-foreground">{t("recoveryDisclaimer")}</p>
-      {elapsed ? <p className="rounded-2xl bg-danger/10 px-3 py-2 text-danger">{elapsed}</p> : null}
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-2 pb-4 border-b border-border/50">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{urgencyLabel}</h1>
+          {elapsed ? <span className="rounded-xl bg-danger-tint px-3 py-1 text-xs font-bold text-danger border border-danger/30">{elapsed}</span> : null}
+        </div>
+        {row.plan?.urgencyNote ? <p className="text-sm text-foreground/90 leading-relaxed">{row.plan.urgencyNote}</p> : null}
+        <p className="text-xs text-muted-foreground">{t("recoveryDisclaimer")}</p>
+      </div>
 
-      <ol className="space-y-3">
-        {row.plan.steps.map((step, i) => {
-          const channel = CHANNELS.find((c) => c.id === step.channelId);
-          return (
-            <motion.li
-              key={step.id}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="rounded-3xl border p-4"
-            >
-              <label className="flex items-start gap-3">
-                <Checkbox
-                  checked={Boolean(row.progress[step.id])}
-                  onCheckedChange={(v) => toggle(step.id, Boolean(v))}
-                />
-                <div>
-                  <p className="font-medium">
-                    {step.timeCritical ? "⏱ " : ""}
-                    {step.title}
-                  </p>
-                  <p className="text-muted-foreground">{step.detail}</p>
-                  {channel?.phone ? (
-                    <a className="text-primary underline" href={`tel:${channel.phone}`}>
-                      {channel.phone}
-                    </a>
-                  ) : null}
-                  {channel?.url ? (
-                    <a className="ml-2 text-primary underline" href={channel.url} target="_blank" rel="noreferrer">
-                      {channel.url}
-                    </a>
-                  ) : null}
-                </div>
-              </label>
-            </motion.li>
-          );
-        })}
-      </ol>
+      {/* 12-Column Grid: Steps (7 cols) + Document (5 cols) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column (7 cols): Steps & Facts Needed */}
+        <div className="lg:col-span-7 space-y-6">
+          <Card className="rounded-[20px] border border-border shadow-sm bg-card p-5 space-y-4">
+            <h2 className="text-lg font-bold text-foreground border-b border-border/50 pb-2">
+              Guided Recovery Action Plan
+            </h2>
+            <ol className="space-y-3">
+              {steps.map((step, i) => {
+                const channel = CHANNELS.find((c) => c.id === step.channelId);
+                return (
+                  <motion.li
+                    key={step.id}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="rounded-2xl border border-border/70 p-4 bg-surface-2/40 hover:bg-surface-2 transition-colors"
+                  >
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <Checkbox
+                        checked={Boolean(progress[step.id])}
+                        onCheckedChange={(v) => toggle(step.id, Boolean(v))}
+                        className="mt-1"
+                      />
+                      <div className="space-y-1">
+                        <p className="font-semibold text-sm text-foreground leading-snug">
+                          {step.timeCritical ? "⏱ " : ""}
+                          {step.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{step.detail}</p>
+                        <div className="flex flex-wrap items-center gap-3 pt-1 text-xs">
+                          {channel?.phone ? (
+                            <a className="text-brand font-medium hover:underline flex items-center gap-1" href={`tel:${channel.phone}`}>
+                              📞 {channel.phone}
+                            </a>
+                          ) : null}
+                          {channel?.url ? (
+                            <a className="text-brand font-medium hover:underline flex items-center gap-1" href={channel.url} target="_blank" rel="noreferrer">
+                              🌐 Official Portal
+                            </a>
+                          ) : null}
+                        </div>
+                      </div>
+                    </label>
+                  </motion.li>
+                );
+              })}
+            </ol>
+          </Card>
 
-      <Card className="rounded-3xl">
-        <CardHeader>
-          <CardTitle>Facts we still need</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {row.plan.fieldsNeeded.map((field) => (
-            <label key={field.key} className="block space-y-1">
-              <span>
-                {field.label}
-                {field.required ? " *" : ""}
-              </span>
-              {field.type === "longtext" ? (
-                <Textarea value={fields[field.key] || ""} onChange={(e) => setFields({ ...fields, [field.key]: e.target.value })} />
-              ) : (
-                <Input
-                  type={field.type === "datetime" ? "datetime-local" : field.type === "number" ? "number" : "text"}
-                  value={fields[field.key] || ""}
-                  onChange={(e) => setFields({ ...fields, [field.key]: e.target.value })}
-                />
-              )}
-              <span className="text-sm text-muted-foreground">{field.hint}</span>
-            </label>
-          ))}
-          <Button onClick={draft}>{t("draftDocs")}</Button>
-        </CardContent>
-      </Card>
+          {fieldsNeeded.length > 0 && (
+            <Card className="rounded-[20px] border border-border shadow-sm bg-card p-5 space-y-4">
+              <h2 className="text-lg font-bold text-foreground border-b border-border/50 pb-2">
+                Facts needed for Complaint Draft
+              </h2>
+              <div className="space-y-3">
+                {fieldsNeeded.map((field) => (
+                  <label key={field.key} className="block space-y-1 text-xs font-semibold text-foreground">
+                    <span>
+                      {field.label}
+                      {field.required ? " *" : ""}
+                    </span>
+                    {field.type === "longtext" ? (
+                      <Textarea
+                        value={fields[field.key] || ""}
+                        onChange={(e) => setFields({ ...fields, [field.key]: e.target.value })}
+                        className="rounded-xl border-border bg-background text-xs"
+                      />
+                    ) : (
+                      <Input
+                        type={field.type === "datetime" ? "datetime-local" : field.type === "number" ? "number" : "text"}
+                        value={fields[field.key] || ""}
+                        onChange={(e) => setFields({ ...fields, [field.key]: e.target.value })}
+                        className="rounded-xl border-border bg-background text-xs"
+                      />
+                    )}
+                    <span className="text-[11px] text-muted-foreground font-normal">{field.hint}</span>
+                  </label>
+                ))}
+                <Button className="w-full rounded-xl bg-brand text-white hover:bg-brand-hover font-semibold" onClick={draft}>
+                  {t("draftDocs")}
+                </Button>
+              </div>
+            </Card>
+          )}
+        </div>
 
-      {(row.documents || []).map((doc) => (
-        <DocumentBlock key={doc.kind} title={doc.title} body={doc.body} />
-      ))}
+        {/* Right Column (5 cols): Draft Documents */}
+        <div className="lg:col-span-5 space-y-6">
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold text-foreground">
+              Generated Complaints
+            </h2>
+            {(row.documents || []).length === 0 ? (
+              <Card className="rounded-[20px] border border-border shadow-sm bg-card p-5 text-center text-xs text-muted-foreground">
+                Complete the facts on the left to generate formal complaint letters for Police, Banks, and Portals.
+              </Card>
+            ) : (
+              (row.documents || []).map((doc) => (
+                <DocumentBlock key={doc.kind} title={doc.title} body={doc.body} />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -172,11 +221,12 @@ function DocumentBlock({ title, body }: { title: string; body: string }) {
               a.click();
             }}
           >
-            {t("downloadTxt")}
+            Download TXT
           </Button>
-          <Button variant="outline" onClick={() => window.print()}>
-            {t("printPdf")}
+          <Button variant="default" onClick={() => window.print()}>
+            Save as PDF
           </Button>
+
         </div>
       </CardContent>
     </Card>

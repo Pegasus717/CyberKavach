@@ -3,7 +3,6 @@ import { analyzeMaskedText } from "@/lib/analyze";
 import { fromZod, jsonError, readJson } from "@/lib/api";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { generateJsonFromParts, isGeminiConfigured } from "@/lib/gemini";
-import { ANALYZE_JSON_SCHEMA, normalizeVerdict } from "@/lib/verdict";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { maskText } from "@/lib/mask";
 

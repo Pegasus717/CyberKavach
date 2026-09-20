@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useI18n } from "@/components/i18n-provider";
-import type { Scan } from "@/lib/types";
 
 export default function EvalPage() {
   const { t } = useI18n();

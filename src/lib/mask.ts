@@ -45,7 +45,10 @@ export function maskText(input: string): MaskResult {
   });
 
   masked = masked.replace(UPI, (match) => {
-    if (match.includes(".")) return match;
+    // Skip if the domain part looks like an email TLD (e.g. @gmail.com)
+    const atIdx = match.indexOf("@");
+    const domain = atIdx >= 0 ? match.slice(atIdx + 1) : "";
+    if (/\.[a-z]{2,6}$/i.test(domain)) return match;
     pushUnique(hits, "[UPI]", match);
     return "[UPI]";
   });

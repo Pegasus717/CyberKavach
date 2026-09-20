@@ -1,14 +1,15 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import type { Connection, Profile, Scan } from "@/lib/types";
-import { bumpUnread } from "@/components/unread-store";
-import { useI18n } from "@/components/i18n-provider";
-import { levelLabel, playPing } from "@/lib/client";
 import { AlertBanner } from "@/components/alert-banner";
+import { bumpUnread } from "@/components/unread-store";
+import { JOIN_CODE_KEY } from "@/lib/share-code";
+import { useI18n } from "@/components/i18n-provider";
+import { api, levelLabel, playPing } from "@/lib/client";
 
 type FamilyState = {
   me: Profile | null;
@@ -38,7 +39,8 @@ export function FamilyRealtimeProvider({ children }: { children: React.ReactNode
   const router = useRouter();
   const pathname = usePathname();
 
-  const reload = async () => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const reload = useCallback(async () => {
     const supabase = createBrowserSupabase();
     if (!supabase) return;
     const { data: userData } = await supabase.auth.getUser();
@@ -65,7 +67,24 @@ export function FamilyRealtimeProvider({ children }: { children: React.ReactNode
     setProfiles(map);
     const { data: scanRows } = await supabase.from("scans").select("*").order("created_at", { ascending: false }).limit(80);
     setScans((scanRows || []) as Scan[]);
-  };
+
+    const pendingCode = localStorage.getItem(JOIN_CODE_KEY);
+    if (pendingCode) {
+      try {
+        await api("/api/connections/request", {
+          method: "POST",
+          body: JSON.stringify({ code: pendingCode }),
+        });
+        localStorage.removeItem(JOIN_CODE_KEY);
+        toast.success("Family request sent");
+      } catch (e) {
+        const message = e instanceof Error ? e.message : "";
+        if (/already/i.test(message) || /pending/i.test(message) || /yourself/i.test(message)) {
+          localStorage.removeItem(JOIN_CODE_KEY);
+        }
+      }
+    }
+  }, [setLang]);
 
   useEffect(() => {
     void reload();

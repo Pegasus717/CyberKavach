@@ -1,3 +1,5 @@
+export const JOIN_CODE_KEY = "kavach-join-code";
+
 export function normalizeShareCode(code: string): string {
   return code.toUpperCase().replace(/[^A-Z0-9]/g, "");
 }

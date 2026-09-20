@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { useFamily } from "@/components/family-realtime";
 import { useI18n } from "@/components/i18n-provider";
@@ -16,8 +17,13 @@ import Link from "next/link";
 export default function SettingsPage() {
   const { me, reload } = useFamily();
   const { t, lang, setLang, largeText, setLargeText, soundOn, setSoundOn } = useI18n();
+  const { theme, setTheme } = useTheme();
   const [name, setName] = useState(me?.display_name || "");
   const router = useRouter();
+
+  useEffect(() => {
+    if (me?.display_name) setName(me.display_name);
+  }, [me?.display_name]);
 
   async function save() {
     await api("/api/profile", {
@@ -66,6 +72,13 @@ export default function SettingsPage() {
           <label className="flex items-center justify-between">
             {t("sound")}
             <Switch checked={soundOn} onCheckedChange={setSoundOn} />
+          </label>
+          <label className="flex items-center justify-between">
+            Dark mode
+            <Switch
+              checked={theme === "dark"}
+              onCheckedChange={(v) => setTheme(v ? "dark" : "light")}
+            />
           </label>
           <Button onClick={save}>Save</Button>
         </CardContent>

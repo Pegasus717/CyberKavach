@@ -29,8 +29,12 @@ export async function api<T>(url: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
   });
-  const data = (await res.json().catch(() => ({}))) as T & { error?: string };
+  const data = (await res.json().catch(() => ({}))) as T & { error?: string; hint?: string };
   if (!res.ok) {
+    if (data.hint?.includes("supabase/schema.sql")) {
+      window.location.href = "/setup";
+      // Let it throw to abort current render flow, but it won't matter as we redirect
+    }
     throw new Error(data.error || `Request failed (${res.status})`);
   }
   return data;

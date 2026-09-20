@@ -2,7 +2,7 @@ export type Lang = "en" | "hi";
 
 export const dict = {
   en: {
-    appName: "Kavach",
+    appName: "Cyber Kavach",
     tagline: "Your AI scam shield",
     check: "Check",
     feed: "Feed",
@@ -72,7 +72,7 @@ export const dict = {
     analyzeShot: "Check screenshot",
   },
   hi: {
-    appName: "कवच",
+    appName: "Cyber Kavach",
     tagline: "आपकी एआई ठगी ढाल",
     check: "जाँच",
     feed: "फ़ीड",

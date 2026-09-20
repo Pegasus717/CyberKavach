@@ -21,6 +21,9 @@ export default function LandingPage() {
             {lang === "en" ? "हिन्दी" : "EN"}
           </Button>
           <Button asChild variant="outline">
+            <Link href="/signup">{t("signup")}</Link>
+          </Button>
+          <Button asChild variant="outline">
             <Link href="/login">{t("login")}</Link>
           </Button>
         </div>

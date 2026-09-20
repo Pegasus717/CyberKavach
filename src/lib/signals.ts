@@ -10,6 +10,69 @@ export type ExtractedSignals = {
   asksPayment: boolean;
 };
 
+export type UrlTrace = { original: string; chain: string[]; final: string; error?: string };
+
+const PRIVATE_IP = /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|0\.0\.0\.0|::1)/;
+const LOCAL_NAMES = /^(localhost|.*\.local)$/i;
+
+export async function traceUrls(urls: string[]): Promise<UrlTrace[]> {
+  const results: UrlTrace[] = [];
+  for (const url of urls.slice(0, 5)) {
+    let current = url;
+    if (!current.startsWith("http")) current = `https://${current}`;
+    
+    const trace: UrlTrace = { original: url, chain: [], final: current };
+    
+    for (let i = 0; i < 5; i++) {
+      try {
+        const u = new URL(current);
+        if (u.protocol !== "http:" && u.protocol !== "https:") {
+          trace.error = "Disallowed protocol";
+          break;
+        }
+        if (PRIVATE_IP.test(u.hostname) || LOCAL_NAMES.test(u.hostname)) {
+          trace.error = "Blocked private/local IP (SSRF protection)";
+          break;
+        }
+        
+        trace.chain.push(current);
+        
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 3000);
+        
+        // redirect: 'manual' to track chain
+        const res = await fetch(current, { 
+          method: "HEAD", 
+          redirect: "manual",
+          signal: controller.signal,
+          headers: { "User-Agent": "KavachBot/1.0" } // no cookies
+        }).catch(async (e) => {
+           // Fallback to GET if HEAD is rejected
+           if (e.name === 'AbortError') throw e;
+           return fetch(current, { method: "GET", redirect: "manual", signal: controller.signal, headers: { "User-Agent": "KavachBot/1.0" } });
+        });
+        
+        clearTimeout(timer);
+        
+        if (res.status >= 300 && res.status < 400) {
+          const loc = res.headers.get("location");
+          if (!loc) break;
+          current = new URL(loc, current).toString();
+          trace.final = current;
+        } else {
+          break; // Not a redirect
+        }
+      } catch (e: any) {
+        if (e.name === "AbortError") trace.error = "Timeout";
+        else trace.error = e.message || "Failed to fetch";
+        break;
+      }
+    }
+    results.push(trace);
+  }
+  return results;
+}
+
 const SHORTENERS = [
   "bit.ly",
   "tinyurl.com",

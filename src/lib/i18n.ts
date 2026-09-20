@@ -68,7 +68,7 @@ export const dict = {
     printPdf: "Print / Save as PDF",
     downloadTxt: "Download .txt",
     evalTitle: "Synthetic accuracy check",
-    screenshotConsent: "I consent to send this screenshot to Gemini for text extraction. Kavach stores only masked text.",
+    screenshotConsent: "I consent to send this screenshot to Gemini for text extraction. Cyber Kavach stores only masked text.",
     analyzeShot: "Check screenshot",
   },
   hi: {

@@ -16,10 +16,10 @@ const devanagari = Noto_Sans_Devanagari({
 });
 
 export const metadata: Metadata = {
-  title: "Kavach — AI scam shield",
-  description: "Paste a suspicious message. Get a real risk verdict, family alerts, and a complaint plan.",
+  title: "Cyber Kavach — AI Scam Shield",
+  description: "Detect scams, protect your family, and get guided complaint recovery.",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "Kavach" },
+  appleWebApp: { capable: true, title: "Cyber Kavach" },
 };
 
 export const viewport: Viewport = {

@@ -13,8 +13,8 @@ export default function LandingPage() {
   return (
     <div className="mx-auto flex min-h-dvh max-w-5xl flex-col px-6 py-8">
       <header className="flex items-center justify-between">
-        <span className="flex items-center gap-2 text-lg font-semibold">
-          <Shield className="text-primary" /> Kavach
+        <span className="flex items-center gap-2 text-lg font-bold tracking-tight text-foreground">
+          <Shield className="text-brand" /> Cyber Kavach
         </span>
         <div className="flex gap-2">
           <Button variant="ghost" onClick={() => setLang(lang === "en" ? "hi" : "en")}>

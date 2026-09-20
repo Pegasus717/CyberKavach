@@ -116,3 +116,77 @@ export async function sendFamilyAlerts(scan: Scan, scannerUserId?: string) {
     console.error("Error sending family background alerts:", err);
   }
 }
+
+export async function sendSecondOpinionRequest(scan: Scan, requesterName: string) {
+  const supabase = createAdminClient();
+  if (!supabase) return;
+
+  try {
+    const { data: cons } = await supabase.from("connections").select("*").eq("status", "accepted");
+    if (!cons || cons.length === 0) return;
+
+    const familyUserIds = new Set<string>();
+    (cons as Connection[]).forEach((c) => {
+      if (c.requester_id === scan.user_id) familyUserIds.add(c.addressee_id);
+      if (c.addressee_id === scan.user_id) familyUserIds.add(c.requester_id);
+    });
+
+    if (familyUserIds.size === 0) return;
+
+    const { data: familyProfiles } = await supabase.from("profiles").select("*").in("id", Array.from(familyUserIds));
+    if (!familyProfiles || familyProfiles.length === 0) return;
+
+    configureWebPush();
+    const scanUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://cyber-kavach-lemon.vercel.app"}/app/scan/${scan.id}`;
+
+    for (const familyMember of familyProfiles as Profile[]) {
+      const pushSub = (familyMember as any).push_subscription;
+      if (pushSub) {
+        try {
+          const payload = JSON.stringify({
+            title: `❓ Is this real? ${requesterName} asks your opinion`,
+            body: `"${scan.masked_text.substring(0, 60)}..." — Tap to vote Safe, Scam, or Call me.`,
+            url: scanUrl,
+            tag: `opinion-req-${scan.id}`,
+          });
+          await webpush.sendNotification(pushSub, payload);
+        } catch (pushErr) {
+          console.error(`[Opinion Push Error] ${familyMember.display_name}:`, pushErr);
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Error sending second opinion request:", e);
+  }
+}
+
+export async function sendSecondOpinionVoteNotification(scan: Scan, voterName: string, vote: string) {
+  const supabase = createAdminClient();
+  if (!supabase) return;
+
+  try {
+    const { data: owner } = await supabase.from("profiles").select("*").eq("id", scan.user_id).maybeSingle();
+    if (!owner) return;
+
+    configureWebPush();
+    const pushSub = (owner as any).push_subscription;
+    const scanUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://cyber-kavach-lemon.vercel.app"}/app/scan/${scan.id}`;
+    const voteLabel = vote === "safe" ? "🟢 SAFE" : vote === "scam" ? "🔴 SCAM" : "📞 CALL ME";
+
+    if (pushSub) {
+      try {
+        const payload = JSON.stringify({
+          title: `💬 Family Second Opinion Received!`,
+          body: `${voterName} voted ${voteLabel} on your scan.`,
+          url: scanUrl,
+          tag: `opinion-vote-${scan.id}`,
+        });
+        await webpush.sendNotification(pushSub, payload);
+      } catch (pushErr) {
+        console.error("[Vote Notification Error]:", pushErr);
+      }
+    }
+  } catch (e) {
+    console.error("Error sending vote notification:", e);
+  }
+}

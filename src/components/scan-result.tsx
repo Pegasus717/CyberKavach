@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { WarningCard } from "@/components/warning-card";
+import { SecondOpinion } from "@/components/second-opinion";
 
 function IconFor(level: string) {
   if (level === "safe") return CheckCircle2;
@@ -132,6 +133,9 @@ export function ScanResult({ scan }: { scan: Scan }) {
               </Button>
             ) : null}
           </Card>
+
+          {/* Human Second Opinion Card */}
+          <SecondOpinion initialScan={scan} />
 
           <WarningCard scan={scan} />
           <AskKavach scanId={scan.id} />

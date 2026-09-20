@@ -44,6 +44,13 @@ export const SCAM_TYPES = [
 
 export type ScamType = (typeof SCAM_TYPES)[number];
 
+export type FamilyOpinion = {
+  userId: string;
+  userName: string;
+  vote: "safe" | "scam" | "call_me";
+  votedAt: string;
+};
+
 export type Verdict = {
   riskScore: number;
   confidence: "low" | "medium" | "high";
@@ -56,6 +63,8 @@ export type Verdict = {
   ifAlreadyActed: string[];
   urls: { url: string; verdict: string; reason: string }[];
   needsComplaintHelp: boolean;
+  askedFamilyAt?: string | null;
+  opinions?: FamilyOpinion[];
 };
 
 export type Scan = {

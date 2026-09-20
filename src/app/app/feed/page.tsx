@@ -60,9 +60,16 @@ export default function FeedPage() {
                           <p className="font-medium">{profiles[scan.user_id]?.display_name || (scan.user_id === userId ? "You" : "Family")}</p>
                           <p className="line-clamp-2 text-muted-foreground">{scan.masked_text}</p>
                         </div>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
                         <span className={`rounded-full px-2 py-1 text-xs ${levelClass(scan.level)}`}>
                           {levelLabel(scan.level, lang)}
                         </span>
+                        {scan.verdict?.askedFamilyAt && (
+                          <span className="rounded-full px-2 py-0.5 text-[10px] font-bold bg-brand/15 text-brand border border-brand/20">
+                            ❓ Asking Second Opinion
+                          </span>
+                        )}
+                      </div>
                       </CardContent>
                     </Card>
                   </Link>

@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CaseTracker } from "@/components/case-tracker";
 
 export default function ComplaintDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -89,8 +90,10 @@ export default function ComplaintDetailPage() {
 
       {/* 12-Column Grid: Steps (7 cols) + Document (5 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column (7 cols): Steps & Facts Needed */}
+        {/* Left Column (7 cols): Case Tracker, Steps & Facts Needed */}
         <div className="lg:col-span-7 space-y-6">
+          <CaseTracker complaint={row} onUpdate={setRow} />
+
           <Card className="rounded-[20px] border border-border shadow-sm bg-card p-5 space-y-4">
             <h2 className="text-lg font-bold text-foreground border-b border-border/50 pb-2">
               Guided Recovery Action Plan

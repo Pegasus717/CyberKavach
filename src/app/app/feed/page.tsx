@@ -49,25 +49,27 @@ export default function FeedPage() {
         {rows.length === 0 ? (
           <Empty />
         ) : (
-          <ul className="space-y-3">
-            {rows.map((scan) => (
-              <motion.li layout key={scan.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-                <Link href={`/app/scan/${scan.id}`}>
-                  <Card className="rounded-3xl transition hover:shadow-md">
-                    <CardContent className="flex items-start justify-between gap-3 pt-5">
-                      <div>
-                        <p className="font-medium">{profiles[scan.user_id]?.display_name || (scan.user_id === userId ? "You" : "Family")}</p>
-                        <p className="line-clamp-2 text-muted-foreground">{scan.masked_text}</p>
-                      </div>
-                      <span className={`rounded-full px-2 py-1 text-xs ${levelClass(scan.level)}`}>
-                        {levelLabel(scan.level, lang)}
-                      </span>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.li>
-            ))}
-          </ul>
+          <div className="max-h-[460px] overflow-y-auto pr-1">
+            <ul className="space-y-3">
+              {rows.map((scan) => (
+                <motion.li layout key={scan.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+                  <Link href={`/app/scan/${scan.id}`}>
+                    <Card className="rounded-3xl transition hover:shadow-md">
+                      <CardContent className="flex items-start justify-between gap-3 pt-5">
+                        <div>
+                          <p className="font-medium">{profiles[scan.user_id]?.display_name || (scan.user_id === userId ? "You" : "Family")}</p>
+                          <p className="line-clamp-2 text-muted-foreground">{scan.masked_text}</p>
+                        </div>
+                        <span className={`rounded-full px-2 py-1 text-xs ${levelClass(scan.level)}`}>
+                          {levelLabel(scan.level, lang)}
+                        </span>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.li>
+              ))}
+            </ul>
+          </div>
         )}
       </AnimatePresence>
     </div>

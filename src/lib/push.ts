@@ -1,13 +1,13 @@
 import webpush from "web-push";
 
-// Default public/private VAPID keys for Cyber Kavach (or load from process.env)
+// Valid cryptographic P-256 VAPID keys for Cyber Kavach
 export const VAPID_PUBLIC_KEY =
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
-  "BEl62iUYgUivxIkv69yViEuiBIa45b_1C-46e3hE0YvN2_S_N1a9F6m4Q9O1-n41E-Uv56Z20a-Fv8P6B8G3R0o";
+  "BFbdXwIpA5kLGQ4m4Xun53ql_tyFajAsYlniPoT3Alexw9ERMZKgx8IS0_eWDVssN5biM-HYJNkNRbN8cJtm2R4";
 
 export const VAPID_PRIVATE_KEY =
   process.env.VAPID_PRIVATE_KEY ||
-  "zW-V5Y27-T5U11-M6b_G7V0Y9Z1-V56P4N3M2L1K0J";
+  "hbmqpHpzrz7paO0ILGLFzj_3MupQwg43YFKAxt6zRuc";
 
 export function configureWebPush() {
   try {

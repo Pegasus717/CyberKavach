@@ -1,31 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, ShieldCheck, Check } from "lucide-react";
+import { Bell, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { VAPID_PUBLIC_KEY } from "@/lib/push-client";
-
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
+import { subscribeUserToPush } from "@/lib/push-client";
 
 export function PushNotificationBanner() {
-  const [permission, setPermission] = useState<NotificationPermission>("default");
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
-      setPermission(Notification.permission);
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.getRegistration().then((reg) => {
           if (reg) {
@@ -46,37 +33,19 @@ export function PushNotificationBanner() {
 
     setLoading(true);
     try {
-      // 1. Request notification permission
       const perm = await Notification.requestPermission();
-      setPermission(perm);
 
       if (perm !== "granted") {
-        toast.error("Notification permission was denied.");
+        toast.error("Notification permission was denied by your browser settings.");
         return;
       }
 
-      // 2. Register Service Worker
-      if ("serviceWorker" in navigator) {
-        const registration = await navigator.serviceWorker.register("/sw.js");
-        await navigator.serviceWorker.ready;
-
-        // 3. Subscribe to Web Push
-        const subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-        });
-
-        // 4. Save subscription to backend
-        const res = await fetch("/api/push/subscribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ subscription }),
-        });
-
-        if (!res.ok) throw new Error("Failed to save push subscription.");
-
+      const ok = await subscribeUserToPush();
+      if (ok) {
         setSubscribed(true);
-        toast.success("🔔 Background Alerts Enabled! You will now receive family alerts even when your browser is closed.");
+        toast.success("🔔 Background Alerts Enabled! You will receive family alerts even when your browser is closed.");
+      } else {
+        toast.error("Could not register Web Push subscription.");
       }
     } catch (err) {
       console.error(err);

@@ -7,6 +7,7 @@ import type { FamilyOpinion } from "@/lib/types";
 const schema = z.object({
   scanId: z.string().min(1),
   action: z.enum(["ask", "vote"]),
+  targetUserId: z.string().optional(),
   vote: z.enum(["safe", "scam", "call_me"]).optional(),
 });
 
@@ -40,9 +41,13 @@ export async function POST(request: Request) {
 
   if (parsed.data.action === "ask") {
     verdict.askedFamilyAt = new Date().toISOString();
+    if (parsed.data.targetUserId) {
+      verdict.targetUserId = parsed.data.targetUserId;
+    }
+
     const { data: updated, error } = await admin
       .from("scans")
-      .update({ verdict, updated_at: new Date().toISOString() })
+      .update({ verdict })
       .eq("id", scan.id)
       .select("*")
       .single();
@@ -50,7 +55,7 @@ export async function POST(request: Request) {
     if (error) return jsonError(error.message, 500);
 
     // Send background push notification to connected family members
-    void sendSecondOpinionRequest(updated as any, userName);
+    void sendSecondOpinionRequest(updated as any, userName, parsed.data.targetUserId);
 
     return Response.json({ scan: updated });
   }
@@ -77,7 +82,7 @@ export async function POST(request: Request) {
 
     const { data: updated, error } = await admin
       .from("scans")
-      .update({ verdict, updated_at: new Date().toISOString() })
+      .update({ verdict })
       .eq("id", scan.id)
       .select("*")
       .single();

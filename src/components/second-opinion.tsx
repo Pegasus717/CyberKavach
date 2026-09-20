@@ -15,6 +15,7 @@ export function SecondOpinion({ initialScan }: { initialScan: Scan }) {
   const [scan, setScan] = useState<Scan>(initialScan);
   const [asking, setAsking] = useState(false);
   const [voting, setVoting] = useState<string | null>(null);
+  const [targetUserId, setTargetUserId] = useState<string>("all");
   const { userId, profiles, connections } = useFamily();
   const { lang } = useI18n();
 
@@ -27,6 +28,13 @@ export function SecondOpinion({ initialScan }: { initialScan: Scan }) {
   const opinions: FamilyOpinion[] = verdict.opinions || [];
   const askedAt = verdict.askedFamilyAt;
 
+  const connectedFamily = connections
+    .filter((c) => c.status === "accepted")
+    .map((c) => {
+      const otherId = c.requester_id === userId ? c.addressee_id : c.requester_id;
+      return { id: otherId, name: profiles[otherId]?.display_name || "Family Member" };
+    });
+
   const myVote = opinions.find((o) => o.userId === userId)?.vote;
 
   async function askFamily() {
@@ -34,7 +42,7 @@ export function SecondOpinion({ initialScan }: { initialScan: Scan }) {
     try {
       const res = await api<{ scan: Scan }>("/api/scans/opinion", {
         method: "POST",
-        body: JSON.stringify({ scanId: scan.id, action: "ask" }),
+        body: JSON.stringify({ scanId: scan.id, action: "ask", targetUserId }),
       });
       setScan(res.scan);
       toast.success(
@@ -93,6 +101,27 @@ export function SecondOpinion({ initialScan }: { initialScan: Scan }) {
                 ? "क्या आप एआई जाँच के अलावा परिवार के लोगों की इंसानी राय भी चाहते हैं? अपने परिजनों से पूछें।"
                 : "Want a human sanity check alongside the AI verdict? Ask your connected family members."}
             </p>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-foreground">
+                {lang === "hi" ? "किसे भेजें (Send request to):" : "Send request to:"}
+              </label>
+              <select
+                className="w-full h-10 rounded-xl border border-border bg-background px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-brand"
+                value={targetUserId}
+                onChange={(e) => setTargetUserId(e.target.value)}
+              >
+                <option value="all">
+                  🌐 {lang === "hi" ? "सभी जुड़े परिजन (All Family Members)" : "All Family Members"}
+                </option>
+                {connectedFamily.map((fam) => (
+                  <option key={fam.id} value={fam.id}>
+                    👤 {fam.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <Button
               className="w-full rounded-xl font-bold bg-brand text-white hover:bg-brand-hover shadow-md h-11 flex items-center justify-center gap-2 text-sm"
               disabled={asking}
@@ -100,8 +129,8 @@ export function SecondOpinion({ initialScan }: { initialScan: Scan }) {
             >
               <Vote className="size-4" />
               {asking
-                ? lang === "hi" ? "अनुरोध भेजा जा रहा है..." : "Asking Family..."
-                : lang === "hi" ? "👨‍👩‍👧‍👦 परिजनों से पूछें (Ask My Family)" : "👨‍👩‍👧‍👦 Ask My Family"}
+                ? lang === "hi" ? "अनुरोध भेजा जा रहा है..." : "Asking..."
+                : lang === "hi" ? "👨‍👩‍👧‍👦 राय मांगें (Ask For Opinion)" : "👨‍👩‍👧‍👦 Ask For Opinion"}
             </Button>
           </div>
         )}
@@ -109,9 +138,18 @@ export function SecondOpinion({ initialScan }: { initialScan: Scan }) {
         {/* Scenario 2: Scan Owner has asked family */}
         {isOwner && askedAt && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
-              <span className="grid size-5 place-items-center rounded-full bg-safe-tint text-safe text-[10px] font-bold">✓</span>
-              <span>{lang === "hi" ? "परिवार से द्वितीय राय मांगी गई है" : "Asked Family for Second Opinion"}</span>
+            <div className="flex items-center justify-between text-xs font-semibold text-foreground">
+              <span className="flex items-center gap-1.5">
+                <span className="grid size-5 place-items-center rounded-full bg-safe-tint text-safe text-[10px] font-bold">✓</span>
+                <span>{lang === "hi" ? "द्वितीय राय मांगी गई है" : "Asked Family for Second Opinion"}</span>
+              </span>
+              {verdict.targetUserId && verdict.targetUserId !== "all" ? (
+                <Badge variant="outline" className="text-[10px] font-semibold">
+                  Target: {profiles[verdict.targetUserId]?.display_name || "Family Member"}
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-[10px] font-semibold">Target: All Family</Badge>
+              )}
             </div>
 
             {opinions.length === 0 ? (

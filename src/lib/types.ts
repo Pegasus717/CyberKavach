@@ -64,6 +64,7 @@ export type Verdict = {
   urls: { url: string; verdict: string; reason: string }[];
   needsComplaintHelp: boolean;
   askedFamilyAt?: string | null;
+  targetUserId?: string | null;
   opinions?: FamilyOpinion[];
 };
 

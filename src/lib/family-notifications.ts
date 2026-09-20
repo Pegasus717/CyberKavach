@@ -117,7 +117,7 @@ export async function sendFamilyAlerts(scan: Scan, scannerUserId?: string) {
   }
 }
 
-export async function sendSecondOpinionRequest(scan: Scan, requesterName: string) {
+export async function sendSecondOpinionRequest(scan: Scan, requesterName: string, targetUserId?: string) {
   const supabase = createAdminClient();
   if (!supabase) return;
 
@@ -133,7 +133,12 @@ export async function sendSecondOpinionRequest(scan: Scan, requesterName: string
 
     if (familyUserIds.size === 0) return;
 
-    const { data: familyProfiles } = await supabase.from("profiles").select("*").in("id", Array.from(familyUserIds));
+    let targetIds = Array.from(familyUserIds);
+    if (targetUserId && targetUserId !== "all" && familyUserIds.has(targetUserId)) {
+      targetIds = [targetUserId];
+    }
+
+    const { data: familyProfiles } = await supabase.from("profiles").select("*").in("id", targetIds);
     if (!familyProfiles || familyProfiles.length === 0) return;
 
     configureWebPush();
